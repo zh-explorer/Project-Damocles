@@ -107,6 +107,7 @@ void adminCmd(int64_t fromGroup, const char * msg) {
 		sprintf(bp, "[CQ:at,qq=%lld] hello", QQId);
 		CQ_sendGroupMsg(ac, fromGroup, bp);
 	}
+	free(bp);
 }
 
 int64_t times[200];
@@ -132,6 +133,7 @@ void requestAt(int64_t fromGroup, int64_t fromQQ, const char *msg) {
 	}
 	sprintf(bp, "[CQ:at,qq=%lld] 找我干什么", fromQQ);
 	CQ_sendGroupMsg(ac, fromGroup, bp);
+	free(bp);
 }
 
 /*
@@ -195,6 +197,7 @@ CQEVENT(int32_t, __eventSystem_GroupMemberIncrease, 32)(int32_t subType, int32_t
 	int index = rand() % lenWelcode;
 	sprintf(bp, "[CQ:at,qq=%lld] 欢迎加入信息安全协会2016届新生群\n请先阅读以下事项：\n1、协会ctf平台: 还没写Orz wiki：http://t.cn/R5BI2h5 ，drops：http://t.cn/R5BILcO \n2、协会简介请移步：http://t.cn/R5BIyba \n3、如有任何疑问，请在群里艾特管理员提问 \n PS:%s", beingOperateQQ, welcome[index]);
 	CQ_sendGroupMsg(ac, fromGroup, bp);
+	free(bp);
 	return EVENT_IGNORE; //关于返回值说明, 见“_eventPrivateMsg”函数
 }
 
