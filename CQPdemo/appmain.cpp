@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include "appmain.h" //应用AppID等信息，请正确填写，否则酷Q可能无法加载
+
+#include "C:\\Python27\include\Python.h"
+#pragma comment(lib,"C:\\Python27\\libs\\python27.lib")
 using namespace std;
 
 char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物\n","竜が我が敵を喰らえ!\n","c语言我只服c prime plus\n","//土土是萌妹子人美声甜活好水多\n","Just hack for fun\n","As we do, as you know \n" };
@@ -17,8 +20,8 @@ int lenWelcode = sizeof(welcome);
 
 int ac = -1; //AuthCode 调用酷Q的方法时需要用到
 bool enabled = false;
-
-
+PyObject *pModule;
+void checkImage(int64_t fromGroup, int64_t fromQQ, const char *msg);
 /* 
 * 返回应用的ApiVer、Appid，打包后将不会调用
 */
@@ -67,6 +70,11 @@ CQEVENT(int32_t, __eventExit, 0)() {
 CQEVENT(int32_t, __eventEnable, 0)() {
 	enabled = true;
 	srand(clock());
+	Py_SetPythonHome("C:\\python27");
+	Py_Initialize();
+	PyRun_SimpleString("import sys");
+	PyRun_SimpleString("sys.path.append('C:\\module')");
+	pModule = PyImport_ImportModule("CQTools");
 	return 0;
 }
 
@@ -79,6 +87,7 @@ CQEVENT(int32_t, __eventEnable, 0)() {
 */
 CQEVENT(int32_t, __eventDisable, 0)() {
 	enabled = false;
+	Py_Finalize();
 	return 0;
 }
 
@@ -88,7 +97,13 @@ CQEVENT(int32_t, __eventDisable, 0)() {
 * subType 子类型，11/来自好友 1/来自在线状态 2/来自群 3/来自讨论组
 */
 CQEVENT(int32_t, __eventPrivateMsg, 24)(int32_t subType, int32_t sendTime, int64_t fromQQ, const char *msg, int32_t font) {
-
+	if (fromQQ == 87294982) {
+		char *getImage = "[CQ:image,file=";
+		char *get = strstr((char *)msg, getImage);
+		if (get != NULL) {
+			checkImage(0, fromQQ, msg);
+		}
+	}
 	//如果要回复消息，请调用酷Q方法发送，并且这里 return EVENT_BLOCK - 截断本条消息，不再继续处理  注意：应用优先级设置为"最高"(10000)时，不得使用本返回值
 	//如果不回复消息，交由之后的应用/过滤器处理，这里 return EVENT_IGNORE - 忽略本条消息
 	return EVENT_IGNORE;
@@ -117,7 +132,7 @@ void requestAt(int64_t fromGroup, int64_t fromQQ, const char *msg) {
 	for (int i = 0; i < 200; i++) {
 		if (times[i * 2] == fromQQ) {
 			times[i * 2 + 1]++;
-			if (times[i * 2 + 1] == 2) {
+			if (times[i * 2 + 1] == 9999) {
 				times[i * 2 + 1] = 0;
 				CQ_setGroupBan(ac, fromGroup, fromQQ, 600);
 				sprintf(bp, "[CQ:at,qq=%lld] 老是找我是想干啥？", fromQQ);
@@ -131,8 +146,27 @@ void requestAt(int64_t fromGroup, int64_t fromQQ, const char *msg) {
 			break;
 		}
 	}
-	sprintf(bp, "[CQ:at,qq=%lld] 找我干什么", fromQQ);
-	CQ_sendGroupMsg(ac, fromGroup, bp);
+	//sprintf(bp, "[CQ:at,qq=%lld] 找我干什么", fromQQ);
+	//CQ_sendGroupMsg(ac, fromGroup, bp);
+	free(bp);
+}
+
+void checkImage(int64_t fromGroup, int64_t fromQQ,const char *msg) {
+	PyObject *pFunc,*pArg,*pRet;
+	int time;
+	char *bp = (char *)malloc(0x1000);
+	pFunc = PyObject_GetAttrString(pModule, "aliCheck");
+	pArg = Py_BuildValue("(s)", msg);
+	pRet = PyObject_CallObject(pFunc, pArg);
+	time = PyInt_AsLong(pRet);
+	if (time == -1) {
+		CQ_addLog(ac, 1, "test", "error");
+	}
+	else if (time != 0) {
+		CQ_setGroupBan(ac, fromGroup, fromQQ, time);
+		sprintf(bp, "[CQ:at,qq=%lld] 都说了多少次了，我们是正规群！", fromQQ);
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
 	free(bp);
 }
 
@@ -148,6 +182,13 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t sendTime, int64_t
 		char *at = strstr((char *)msg, atMe);
 		if (at != NULL) {
 			requestAt(fromGroup, fromQQ, msg);
+		}
+	}
+	if (fromGroup == 555091662) {
+		char *getImage = "[CQ:image,file=";
+		char *get = strstr((char *)msg, getImage);
+		if (get != NULL) {
+			checkImage(fromGroup, fromQQ, msg);
 		}
 	}
 	
