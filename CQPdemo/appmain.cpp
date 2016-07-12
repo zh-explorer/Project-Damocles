@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include "string"
 #include "cqp.h"
+#include <windows.h>
 #include <stdlib.h>
 #include <time.h>
 #include "appmain.h" //应用AppID等信息，请正确填写，否则酷Q可能无法加载
@@ -15,8 +16,14 @@
 #pragma comment(lib,"C:\\Python27\\libs\\python27.lib")
 using namespace std;
 
+typedef struct {
+	char **word;
+	int len;
+}keyword;
+
 char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物\n","竜が我が敵を喰らえ!\n","c语言我只服c prime plus\n","//土土是萌妹子人美声甜活好水多\n","Just hack for fun\n","As we do, as you know \n" };
 int lenWelcode = sizeof(welcome);
+CRITICAL_SECTION  _critical;
 
 int ac = -1; //AuthCode 调用酷Q的方法时需要用到
 bool enabled = false;
@@ -75,6 +82,7 @@ CQEVENT(int32_t, __eventEnable, 0)() {
 	PyRun_SimpleString("import sys");
 	PyRun_SimpleString("sys.path.append('C:\\module')");
 	pModule = PyImport_ImportModule("CQTools");
+	InitializeCriticalSection(&_critical);
 	return 0;
 }
 
@@ -88,6 +96,7 @@ CQEVENT(int32_t, __eventEnable, 0)() {
 CQEVENT(int32_t, __eventDisable, 0)() {
 	enabled = false;
 	Py_Finalize();
+	DeleteCriticalSection(&_critical);
 	return 0;
 }
 
@@ -169,7 +178,87 @@ void checkImage(int64_t fromGroup, int64_t fromQQ,const char *msg) {
 	}
 	free(bp);
 }
+char *(keyIsa[]) = {"安协","协会","信息安全协会"};
+char *(keyWhere[]) = { "哪","位置","地址","怎么去","怎么走","咋去"};
+int lenIsa = sizeof(keyIsa) / 4;
+int lenWhere = sizeof(keyWhere) / 4;
+keyword where[2] = { {keyIsa,lenIsa},{keyWhere,lenWhere} };
 
+char *(keyWhat[]) = { "c语言","C语言","编程","黑客","信安","安全"};
+int lenWhat = sizeof(keyWhat) / 4;
+char *(keyHow[]) = { "什么","怎么","应该","如何","哪些","有没有" ,"有关", "想","教","咋","么?","么？","呢","吗","没？","没?" };
+int lenHow = sizeof(keyHow) / 4;
+char *(keyLearn[]) = { "学","了解","书","写","看","入门", "当", "做" };
+int lenLearn = sizeof(keyLearn) / 4;
+keyword learn[] = { { keyWhat,lenWhat },{ keyHow,lenHow },{ keyLearn,lenLearn } };
+
+char *(keyHack[]) = {"日","拿","黑","入侵","攻击","拖","盗","刷"};
+int lenHack = sizeof(keyHack) / 4;
+char *(keyWeb[]) = { "数据","站","杭电","官网", "库" ,"QQ","qq","钻","会员","号","挂"};
+int lenWeb = sizeof(keyWeb) / 4;
+keyword hack[] = { { keyHack ,lenHack },{ keyWeb ,lenWeb }, { keyHow ,lenHow } };
+
+char *(keyPersion[]) = {"人"};
+int lenPersion = sizeof(keyPersion) / 4;
+keyword persion[] = { { keyHow,lenHow },{ keyPersion,lenPersion },{ keyIsa,lenIsa } };
+
+int checkExist(keyword *key, const char *msg, int len) {
+	int i;
+	for (i = 0; i < key[len - 1].len; i++) {
+		if (strstr(msg, key[len-1].word[i])) {
+			if (len != 1) {
+				return checkExist(key, msg, len - 1);
+			}
+			else {
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+void checkWord(int64_t fromGroup, int64_t fromQQ, const char *msg) {
+	char *bp = (char *)malloc(0x1000);
+	if (checkExist(where, msg, 2)) {
+		sprintf(bp, "[CQ:at,qq=%lld] 如果你是想问信息安全协会地址的话。是在一教（信仁楼）106。\n欢迎随时过来[CQ:face,id=21]", fromQQ);
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
+	if (checkExist(learn, msg, 3)) {
+		sprintf(bp, "[CQ:at,qq=%lld] 如果想入门的话，还是要以c语言为基础。\n至于学习c语言最有效的还是看C primer plus。http://t.cn/R5eqrV2 \nPS: 最好不要看谭浩强，XX天精通或者是从入门到精通系列 [CQ:face,id=21]", fromQQ);
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
+	if (checkExist(hack, msg, 3)) {
+		sprintf(bp, "[CQ:at,qq=%lld] 国家刑法第二百八十六条规定，\n关于恶意利用计算机犯罪相关条文对于违反国家规定，对计算机信息系统功能进行删除、修改、增加、干扰，造成计算机信息系统不能正常运行，后果严重的，处五年以下有期徒刑或者拘役；后果特别严重的，处五年以上有期徒刑。\n违反国家规定，对计算机信息系统中存储、处理或者传输的数据和应用程序进行删除、修改、增加的操作，后果严重的，依照前款的规定处罚。", fromQQ);
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
+	if (checkExist(persion, msg, 3)) {
+		sprintf(bp, "[CQ:at,qq=%lld] 不知道(还没写)", fromQQ);
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
+	free(bp);
+}
+void checkWord1(int64_t fromGroup, int64_t fromQQ, const char *msg) {
+	int i;
+	char *get;
+	char *bp = (char *)malloc(0x1000);
+	for (i = 0; i < lenIsa; i++) {
+		if (strstr((char *)msg, keyIsa[i])) {
+			break;
+		}
+	}
+	if (i != lenIsa) {
+		for (i = 0; i < lenWhere; i++) {
+			if (strstr((char *)msg, keyWhere[i])) {
+				break;
+			}
+		}
+		if (i != lenWhere) {
+			sprintf(bp, "[CQ:at,qq=%lld] 如果你是想问信息安全协会地址的话。是在一教（信仁楼）106。\n欢迎随时过来[CQ:face,id=21]", fromQQ);
+			CQ_sendGroupMsg(ac, fromGroup, bp);
+		}
+		free(bp);
+	}
+}
 /*
 * Type=2 群消息
 */
@@ -188,9 +277,15 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t sendTime, int64_t
 		char *getImage = "[CQ:image,file=";
 		char *get = strstr((char *)msg, getImage);
 		if (get != NULL) {
+			EnterCriticalSection(&_critical);
 			checkImage(fromGroup, fromQQ, msg);
+			LeaveCriticalSection(&_critical);
 		}
 	}
+	if (fromGroup == 555091662) {
+		checkWord(fromGroup, fromQQ, msg);
+	}
+
 	
 	return EVENT_IGNORE; //关于返回值说明, 见“_eventPrivateMsg”函数
 }
