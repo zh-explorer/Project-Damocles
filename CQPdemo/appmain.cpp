@@ -21,8 +21,10 @@ typedef struct {
 	int len;
 }keyword;
 
+int flag;
+
 char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物\n","竜が我が敵を喰らえ!\n","c语言我只服c prime plus\n","//土土是萌妹子人美声甜活好水多\n","Just hack for fun\n","As we do, as you know \n" };
-int lenWelcode = sizeof(welcome);
+int lenWelcode = sizeof(welcome) / 4;
 CRITICAL_SECTION  _critical;
 
 int ac = -1; //AuthCode 调用酷Q的方法时需要用到
@@ -76,7 +78,6 @@ CQEVENT(int32_t, __eventExit, 0)() {
 */
 CQEVENT(int32_t, __eventEnable, 0)() {
 	enabled = true;
-	srand(clock());
 	Py_SetPythonHome("C:\\python27");
 	Py_Initialize();
 	PyRun_SimpleString("import sys");
@@ -121,10 +122,20 @@ CQEVENT(int32_t, __eventPrivateMsg, 24)(int32_t subType, int32_t sendTime, int64
 
 void adminCmd(int64_t fromGroup, const char * msg) {
 	int64_t QQId;
+	char *t;
+	long int ti;
 	char *bp = (char *)malloc(0x1000);
 	if (strncmp(msg, "ban:", 4) == 0) {
-		QQId = atoll(&msg[4]);
-		CQ_setGroupBan(ac, fromGroup, QQId, 600);
+		QQId = strtoll(&msg[4],&t,10);
+		ti = atoi(t+1);
+		flag = 1;
+		while (flag) {
+			CQ_setGroupBan(ac, fromGroup, QQId, 60 * ti);
+			Sleep(1000 * 60 * ti);
+		}
+	}
+	if (strncmp(msg, "unban", 6) == 0) {
+		flag = 0;
 	}
 	if (strncmp(msg, "at:", 3) == 0) {
 		QQId = atoll(&msg[3]);
@@ -141,9 +152,9 @@ void requestAt(int64_t fromGroup, int64_t fromQQ, const char *msg) {
 	for (int i = 0; i < 200; i++) {
 		if (times[i * 2] == fromQQ) {
 			times[i * 2 + 1]++;
-			if (times[i * 2 + 1] == 9999) {
+			if (times[i * 2 + 1] == 15) {
 				times[i * 2 + 1] = 0;
-				CQ_setGroupBan(ac, fromGroup, fromQQ, 600);
+				CQ_setGroupBan(ac, fromGroup, fromQQ, 3600);
 				sprintf(bp, "[CQ:at,qq=%lld] 老是找我是想干啥？", fromQQ);
 				CQ_sendGroupMsg(ac, fromGroup, bp);
 				return;
@@ -330,9 +341,12 @@ CQEVENT(int32_t, __eventSystem_GroupMemberDecrease, 32)(int32_t subType, int32_t
 */
 CQEVENT(int32_t, __eventSystem_GroupMemberIncrease, 32)(int32_t subType, int32_t sendTime, int64_t fromGroup, int64_t fromQQ, int64_t beingOperateQQ) {
 	char *bp = (char *)malloc(0x1000);
-	int index = rand() % lenWelcode;
-	sprintf(bp, "[CQ:at,qq=%lld] 欢迎加入信息安全协会2016届新生群\n请先阅读以下事项：\n1、协会ctf平台: 还没写Orz wiki：http://t.cn/R5BI2h5 ，drops：http://t.cn/R5BILcO \n2、协会简介请移步：http://t.cn/R5BIyba \n3、如有任何疑问，请在群里艾特管理员提问 \n PS:%s", beingOperateQQ, welcome[index]);
-	CQ_sendGroupMsg(ac, fromGroup, bp);
+	if (fromGroup == 555091662) {
+		srand(time(NULL));
+		int index = rand() % lenWelcode;
+		sprintf(bp, "[CQ:at,qq=%lld] 欢迎加入信息安全协会2016届新生群\n请先阅读以下事项：\n1、协会ctf平台: 还没写Orz wiki：http://t.cn/R5BI2h5 ，drops：http://t.cn/R5BILcO \n2、协会简介请移步：http://t.cn/R5BIyba \n3、如有任何疑问，请在群里艾特管理员提问 \n PS:%s", beingOperateQQ, welcome[index]);
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
 	free(bp);
 	return EVENT_IGNORE; //关于返回值说明, 见“_eventPrivateMsg”函数
 }
