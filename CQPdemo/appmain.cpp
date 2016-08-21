@@ -119,7 +119,29 @@ CQEVENT(int32_t, __eventPrivateMsg, 24)(int32_t subType, int32_t sendTime, int64
 	return EVENT_IGNORE;
 }
 
-
+void News(int64_t fromGroup) {
+	PyObject *pFunc,*pRet;
+	char * bp;
+	pFunc = PyObject_GetAttrString(pModule, "getNews");
+	pRet = PyObject_CallObject(pFunc, NULL);
+	bp = PyString_AsString(pRet);
+	CQ_sendGroupMsg(ac, fromGroup, bp);
+	Py_DECREF(pFunc);
+	Py_DECREF(pRet);
+}
+void startGetNews(int64_t fromGroup) {
+	PyObject *pFunc, *pRet;
+	char * bp;
+	pFunc = PyObject_GetAttrString(pModule, "getDailyNews");
+	pRet = PyObject_CallObject(pFunc, NULL);
+	bp = PyString_AsString(pRet);
+	CQ_addLog(ac, 1, "test", bp);
+	if (strcmp(bp,"null")) {
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
+	Py_DECREF(pFunc);
+	Py_DECREF(pRet);
+}
 void adminCmd(int64_t fromGroup, const char * msg) {
 	int64_t QQId;
 	char *t;
@@ -137,6 +159,12 @@ void adminCmd(int64_t fromGroup, const char * msg) {
 	if (strncmp(msg, "unban", 6) == 0) {
 		flag = 0;
 	}
+	if (strncmp(msg, "news", 4) == 0) {
+		while (1) {
+			startGetNews(fromGroup);
+			Sleep(1000 * 60);
+		}
+	}
 	if (strncmp(msg, "at:", 3) == 0) {
 		QQId = atoll(&msg[3]);
 		sprintf(bp, "[CQ:at,qq=%lld] hello", QQId);
@@ -152,7 +180,7 @@ void requestAt(int64_t fromGroup, int64_t fromQQ, const char *msg) {
 	for (int i = 0; i < 200; i++) {
 		if (times[i * 2] == fromQQ) {
 			times[i * 2 + 1]++;
-			if (times[i * 2 + 1] == 15) {
+			if (times[i * 2 + 1] == 5) {
 				times[i * 2 + 1] = 0;
 				CQ_setGroupBan(ac, fromGroup, fromQQ, 3600);
 				sprintf(bp, "[CQ:at,qq=%lld] 老是找我是想干啥？", fromQQ);
@@ -186,8 +214,12 @@ void checkImage(int64_t fromGroup, int64_t fromQQ,const char *msg) {
 		CQ_setGroupBan(ac, fromGroup, fromQQ, time);
 		sprintf(bp, "[CQ:at,qq=%lld] 都说了多少次了，我们是正规群！", fromQQ);
 		CQ_sendGroupMsg(ac, fromGroup, bp);
+		Py_DECREF(pRet);
 	}
 	free(bp);
+	Py_DECREF(pFunc);
+	Py_DECREF(pArg);
+	
 }
 char *(keyIsa[]) = {"安协","协会","信息安全协会"};
 char *(keyWhere[]) = { "哪","位置","地址","怎么去","怎么走","咋去"};
@@ -199,7 +231,7 @@ char *(keyWhat[]) = { "c语言","C语言","编程","黑客","信安","安全"};
 int lenWhat = sizeof(keyWhat) / 4;
 char *(keyHow[]) = { "什么","怎么","应该","如何","哪些","有没有" ,"有关", "想","教","咋","么?","么？","呢","吗","没？","没?" };
 int lenHow = sizeof(keyHow) / 4;
-char *(keyLearn[]) = { "学","了解","书","写","看","入门", "当", "做" };
+char *(keyLearn[]) = { "学","了解","书","写","看","入门", "当", "做"};
 int lenLearn = sizeof(keyLearn) / 4;
 keyword learn[] = { { keyWhat,lenWhat },{ keyHow,lenHow },{ keyLearn,lenLearn } };
 
@@ -297,6 +329,12 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t sendTime, int64_t
 		checkWord(fromGroup, fromQQ, msg);
 	}
 
+	if (fromGroup == 555091662) {
+		if (!strcmp(msg, "每日新闻")) {
+			News(fromGroup);
+		}
+	}
+
 	
 	return EVENT_IGNORE; //关于返回值说明, 见“_eventPrivateMsg”函数
 }
@@ -345,6 +383,10 @@ CQEVENT(int32_t, __eventSystem_GroupMemberIncrease, 32)(int32_t subType, int32_t
 		srand(time(NULL));
 		int index = rand() % lenWelcode;
 		sprintf(bp, "[CQ:at,qq=%lld] 欢迎加入信息安全协会2016届新生群\n请先阅读以下事项：\n1、协会ctf平台: 还没写Orz wiki：http://t.cn/R5BI2h5 ，drops：http://t.cn/R5BILcO \n2、协会简介请移步：http://t.cn/R5BIyba \n3、如有任何疑问，请在群里艾特管理员提问 \n PS:%s", beingOperateQQ, welcome[index]);
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
+	if (fromGroup == 198508284) {
+		sprintf(bp, "欢迎加入杭州电子科技大学2016级网络空间安全学院新生群。\n为了让大家更好的相互了解，请先更改一下群名片。\n备注格式为专业-省份-姓名\nPS:自觉爆照哦[CQ:face,id=21]", beingOperateQQ);
 		CQ_sendGroupMsg(ac, fromGroup, bp);
 	}
 	free(bp);

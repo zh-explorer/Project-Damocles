@@ -2,8 +2,11 @@
 from aliyunsdkcore import client
 from aliyunsdkgreen.request.v20160627 import ImageDetectionRequest
 import json
+import news
+import datetime
 
 def check(url):
+
 	fp = open('C:\\module\\AccessSecret','r')
 	secret = fp.read()
 	fp.close()
@@ -13,10 +16,14 @@ def check(url):
 	request.set_accept_format('json')
 	request.set_Async('false')
 	request.set_ImageUrl(json.dumps([url]))
-	request.set_Scene(json.dumps(["porn","ocr"]))
+	request.set_Scene(json.dumps(["porn",]))
 	response = clt.do_action(request)
 
+	logger = open("C:\\log\\log.txt",'a',0)
+	logger.write(response+'\n')
+	logger.close()
 	result = json.loads(response)
+
 	if "Success" == result["Code"]:
 	    imageResults = result["ImageResults"]["ImageResult"]
 	    for imageDetectResult in imageResults:
@@ -25,14 +32,14 @@ def check(url):
 	    		return 3600 * 24
 	    	elif pornResult["Label"] == 2:
 	    		time = int(3600 * 3 *pornResult["Rate"]) / 100
-	    		return time - time%60
+	    		return (time - time%60)+60
 	return 0
 
 
 def aliCheck(msg):
 	path = "C:\\nameless\\Damocles\\data\\image\\"
 	stone = "C:\\log\\image"
-	#logger = open("C:\\log\\log.txt",'a',0)
+	
 	namefile = open(stone,'r',0)
 	existname = namefile.readlines()
 	namefile.close()
@@ -67,3 +74,24 @@ def getImageName(msg):
 		imageNames.append(msg[start+15:end])
 		start = msg.find('[CQ:image,file=',end)
 	return imageNames
+
+def getNews():
+	ret = news.drops_spider(datetime.date.today() - datetime.timedelta(days=1))
+	if len(ret) == 0:
+		return "[CQ:at,qq=87294982]你又偷懒不更新drops了。快去更新".decode('utf8').encode('gbk')
+	else:
+		string = ""
+		for i in ret:
+			string += i['title'] + '\n'
+			string += i['link']
+			string += '\n\n'
+		return string.encode('gbk')
+
+def getDailyNews():
+	import time
+	t = time.localtime()
+	print t
+	if t.tm_hour == 9 and t.tm_min == 0:
+		return getNews()
+	else: 
+		return 'null'
