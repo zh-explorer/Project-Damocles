@@ -11,7 +11,7 @@ __email__ = "root@lightless.me"
 
 
 def drops_spider(date=None):
-    target_url = 'http://drops.hduisa.cn/feed'
+    target_url = 'http://drops.hduisa.org/feed'
     feeds = feedparser.parse(target_url)
 
     ret_val = list()

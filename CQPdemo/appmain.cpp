@@ -9,8 +9,10 @@
 #include "cqp.h"
 #include <windows.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "appmain.h" //应用AppID等信息，请正确填写，否则酷Q可能无法加载
+#include <time.h>
 
 #include "C:\\Python27\include\Python.h"
 #pragma comment(lib,"C:\\Python27\\libs\\python27.lib")
@@ -23,7 +25,7 @@ typedef struct {
 
 int flag;
 
-char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物\n","竜が我が敵を喰らえ!\n","c语言我只服c prime plus\n","//土土是萌妹子人美声甜活好水多\n","Just hack for fun\n","As we do, as you know \n" };
+char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物\n","竜が我が敵を喰らえ!\n","c语言我只服c prime plus\n","土土没过四级\n","Just hack for fun\n","As we do, as you know \n" };
 int lenWelcode = sizeof(welcome) / 4;
 CRITICAL_SECTION  _critical;
 
@@ -124,23 +126,33 @@ void News(int64_t fromGroup) {
 	char * bp;
 	pFunc = PyObject_GetAttrString(pModule, "getNews");
 	pRet = PyObject_CallObject(pFunc, NULL);
-	bp = PyString_AsString(pRet);
+	if (pRet == NULL) {
+		bp = "[CQ:at,qq=87294982]每日推送获取失败啦，快去修！！";
+	}
+	else {
+		bp = PyString_AsString(pRet);
+		Py_DECREF(pRet);
+	}
 	CQ_sendGroupMsg(ac, fromGroup, bp);
 	Py_DECREF(pFunc);
-	Py_DECREF(pRet);
 }
 void startGetNews(int64_t fromGroup) {
 	PyObject *pFunc, *pRet;
 	char * bp;
 	pFunc = PyObject_GetAttrString(pModule, "getDailyNews");
 	pRet = PyObject_CallObject(pFunc, NULL);
-	bp = PyString_AsString(pRet);
+	if (pRet == NULL) {
+		bp = "[CQ:at,qq=87294982]每日推送获取失败啦，快去修！！！";
+	}
+	else {
+		bp = PyString_AsString(pRet);
+		Py_DECREF(pRet);
+	}
 	CQ_addLog(ac, 1, "test", bp);
 	if (strcmp(bp,"null")) {
 		CQ_sendGroupMsg(ac, fromGroup, bp);
 	}
 	Py_DECREF(pFunc);
-	Py_DECREF(pRet);
 }
 void adminCmd(int64_t fromGroup, const char * msg) {
 	int64_t QQId;
@@ -162,7 +174,7 @@ void adminCmd(int64_t fromGroup, const char * msg) {
 	if (strncmp(msg, "news", 4) == 0) {
 		while (1) {
 			startGetNews(fromGroup);
-			Sleep(1000 * 60);
+			Sleep(1000 * 60 * 60);
 		}
 	}
 	if (strncmp(msg, "at:", 3) == 0) {
@@ -262,6 +274,8 @@ int checkExist(keyword *key, const char *msg, int len) {
 
 void checkWord(int64_t fromGroup, int64_t fromQQ, const char *msg) {
 	char *bp = (char *)malloc(0x1000);
+	struct tm *local;
+	time_t t;
 	if (checkExist(where, msg, 2)) {
 		sprintf(bp, "[CQ:at,qq=%lld] 如果你是想问信息安全协会地址的话。是在一教（信仁楼）106。\n欢迎随时过来[CQ:face,id=21]", fromQQ);
 		CQ_sendGroupMsg(ac, fromGroup, bp);
@@ -275,7 +289,38 @@ void checkWord(int64_t fromGroup, int64_t fromQQ, const char *msg) {
 		CQ_sendGroupMsg(ac, fromGroup, bp);
 	}
 	if (checkExist(persion, msg, 3)) {
-		sprintf(bp, "[CQ:at,qq=%lld] 不知道(还没写)", fromQQ);
+		t = time(NULL);
+		local = localtime(&t);
+		char timeb[200];
+		if (local->tm_hour <= 6) {
+			sprintf(bp, "[CQ:at,qq=%lld] 这么早估计没什么人起来", fromQQ);
+		}
+		else if (local->tm_hour >= 7 && local->tm_hour <= 9) {
+			sprintf(bp, "[CQ:at,qq=%lld] 大概都在睡觉吧，不知道今天有没有人早起", fromQQ);
+		}
+		else if (local->tm_hour >= 10 && local->tm_hour <= 11) {
+			sprintf(bp, "[CQ:at,qq=%lld] 这点应该有人开门了", fromQQ);
+		}
+		else if (local->tm_hour == 12) {
+			sprintf(bp, "[CQ:at,qq=%lld] 不清楚，没有集体去吃午饭的话应该有人", fromQQ);
+		}
+		else if (local->tm_hour >= 13 && local->tm_hour <= 16) {
+			sprintf(bp, "[CQ:at,qq=%lld] 下午一般都有人在的", fromQQ);
+		}
+		else if (local->tm_hour >= 17 && local->tm_hour <= 18) {
+			sprintf(bp, "[CQ:at,qq=%lld] 不清楚，没有集体去吃晚饭的话应该有人", fromQQ);
+		}
+		else if (local->tm_hour >= 19 && local->tm_hour <= 21) {
+			sprintf(bp, "[CQ:at,qq=%lld] 人应该都没回去呢", fromQQ);
+		}
+		else if (local->tm_hour >= 22 && local->tm_hour <= 23) {
+			sprintf(bp, "[CQ:at,qq=%lld] 这么晚了，除非有人通宵，不然应该没人了", fromQQ);
+		}
+		else {
+			sprintf(bp, "[CQ:at,qq=87294982] 你代码bug了", fromQQ);
+		}
+		sprintf(timeb, " %02d:%02d", local->tm_hour, local->tm_min);
+		strcat(bp, timeb);
 		CQ_sendGroupMsg(ac, fromGroup, bp);
 	}
 	free(bp);
@@ -325,11 +370,11 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t sendTime, int64_t
 			LeaveCriticalSection(&_critical);
 		}
 	}
-	if (fromGroup == 555091662) {
+	if (fromGroup == 555091662 ) {
 		checkWord(fromGroup, fromQQ, msg);
 	}
 
-	if (fromGroup == 555091662) {
+	if (fromGroup == 555091662 || fromGroup == 536559442) {
 		if (!strcmp(msg, "每日新闻")) {
 			News(fromGroup);
 		}
@@ -382,7 +427,7 @@ CQEVENT(int32_t, __eventSystem_GroupMemberIncrease, 32)(int32_t subType, int32_t
 	if (fromGroup == 555091662) {
 		srand(time(NULL));
 		int index = rand() % lenWelcode;
-		sprintf(bp, "[CQ:at,qq=%lld] 欢迎加入信息安全协会2016届新生群\n请先阅读以下事项：\n1、协会ctf平台: 还没写Orz wiki：http://t.cn/R5BI2h5 ，drops：http://t.cn/R5BILcO \n2、协会简介请移步：http://t.cn/R5BIyba \n3、如有任何疑问，请在群里艾特管理员提问 \n PS:%s", beingOperateQQ, welcome[index]);
+		sprintf(bp, "[CQ:at,qq=%lld] 欢迎加入信息安全协会2016届新生群\n请先阅读以下事项：\n1、协会官网: http://hduisa.org \nwiki：http://t.cn/R5BI2h5 \ndrops：http://t.cn/R5BILcO \n2、协会简介请移步：http://t.cn/R5BIyba \n3、如有任何疑问，请在群里艾特管理员提问 \n PS:%s", beingOperateQQ, welcome[index]);
 		CQ_sendGroupMsg(ac, fromGroup, bp);
 	}
 	if (fromGroup == 198508284) {

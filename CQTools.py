@@ -25,21 +25,21 @@ def check(url):
 	result = json.loads(response)
 
 	if "Success" == result["Code"]:
-	    imageResults = result["ImageResults"]["ImageResult"]
-	    for imageDetectResult in imageResults:
-	    	pornResult = imageDetectResult["PornResult"]
-	    	if pornResult["Label"] == 1:
-	    		return 3600 * 24
-	    	elif pornResult["Label"] == 2:
-	    		time = int(3600 * 3 *pornResult["Rate"]) / 100
-	    		return (time - time%60)+60
+		imageResults = result["ImageResults"]["ImageResult"]
+		for imageDetectResult in imageResults:
+			pornResult = imageDetectResult["PornResult"]
+			if pornResult["Label"] == 1:
+				return 3600 * 24
+			elif pornResult["Label"] == 2:
+				time = int(36 * 3 *pornResult["Rate"])
+				return (time - time%60)+60
 	return 0
 
 
 def aliCheck(msg):
 	path = "C:\\nameless\\Damocles\\data\\image\\"
 	stone = "C:\\log\\image"
-	
+	time = 0
 	namefile = open(stone,'r',0)
 	existname = namefile.readlines()
 	namefile.close()
@@ -76,22 +76,27 @@ def getImageName(msg):
 	return imageNames
 
 def getNews():
-	ret = news.drops_spider(datetime.date.today() - datetime.timedelta(days=1))
-	if len(ret) == 0:
-		return "[CQ:at,qq=87294982]你又偷懒不更新drops了。快去更新".decode('utf8').encode('gbk')
-	else:
-		string = ""
-		for i in ret:
-			string += i['title'] + '\n'
-			string += i['link']
-			string += '\n\n'
-		return string.encode('gbk')
-
+	try:	
+		ret = news.drops_spider(datetime.date.today() - datetime.timedelta(days=1))
+		if len(ret) == 0:
+			return "[CQ:at,qq=87294982]你又偷懒不更新drops了。快去更新".decode('utf8').encode('gbk')
+		else:
+			string = ""
+			for i in ret:
+				string += i['title'] + '\n'
+				string += i['link']
+				string += '\n\n'
+			return string.encode('gbk')
+	except Exception as e :
+		fp = open('C:\\module\\error','w')
+		p.write(e)
+		fp.close()
+		return "[CQ:at,qq=87294982]每日推送获取失败啦，快去修！".decode('utf8').encode('gbk')
 def getDailyNews():
 	import time
 	t = time.localtime()
-	print t
-	if t.tm_hour == 9 and t.tm_min == 0:
+	if t.tm_hour == 12:
 		return getNews()
 	else: 
 		return 'null'
+	return "wtf"
