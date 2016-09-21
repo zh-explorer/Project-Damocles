@@ -136,6 +136,22 @@ void News(int64_t fromGroup) {
 	CQ_sendGroupMsg(ac, fromGroup, bp);
 	Py_DECREF(pFunc);
 }
+
+void recentNews(int64_t fromGroup) {
+	PyObject *pFunc, *pRet;
+	char * bp;
+	pFunc = PyObject_GetAttrString(pModule, "getRecentNews");
+	pRet = PyObject_CallObject(pFunc, NULL);
+	if (pRet == NULL) {
+		bp = "[CQ:at,qq=87294982]每日推送获取失败啦，快去修！！";
+	}
+	else {
+		bp = PyString_AsString(pRet);
+		Py_DECREF(pRet);
+	}
+	CQ_sendGroupMsg(ac, fromGroup, bp);
+	Py_DECREF(pFunc);
+}
 void startGetNews(int64_t fromGroup) {
 	PyObject *pFunc, *pRet;
 	char * bp;
@@ -375,8 +391,14 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t sendTime, int64_t
 	}
 
 	if (fromGroup == 555091662 || fromGroup == 536559442) {
-		if (!strcmp(msg, "每日新闻")) {
+		if (!strcmp(msg, "每日消息推送")) {
 			News(fromGroup);
+		}
+	}
+
+	if (fromGroup == 555091662 || fromGroup == 536559442) {
+		if (!strcmp(msg, "近期消息推送")) {
+			recentNews(fromGroup);
 		}
 	}
 

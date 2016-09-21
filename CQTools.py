@@ -31,7 +31,7 @@ def check(url):
 			if pornResult["Label"] == 1:
 				return 3600 * 24
 			elif pornResult["Label"] == 2:
-				time = int(36 * 3 *pornResult["Rate"])
+				time = int(3600 * 3 *pornResult["Rate"]) / 100
 				return (time - time%60)+60
 	return 0
 
@@ -75,9 +75,12 @@ def getImageName(msg):
 		start = msg.find('[CQ:image,file=',end)
 	return imageNames
 
-def getNews():
+def getRecentNews():
+	return getNews(3)
+
+def getNews(day=0):
 	try:	
-		ret = news.drops_spider(datetime.date.today() - datetime.timedelta(days=1))
+		ret = news.drops_spider(datetime.date.today() - datetime.timedelta(days=day))
 		if len(ret) == 0:
 			return "[CQ:at,qq=87294982]你又偷懒不更新drops了。快去更新".decode('utf8').encode('gbk')
 		else:
@@ -92,11 +95,12 @@ def getNews():
 		p.write(e)
 		fp.close()
 		return "[CQ:at,qq=87294982]每日推送获取失败啦，快去修！".decode('utf8').encode('gbk')
+
 def getDailyNews():
 	import time
 	t = time.localtime()
-	if t.tm_hour == 12:
+	if t.tm_hour == 12 and t.tm_min == 0:
 		return getNews()
 	else: 
 		return 'null'
-	return "wtf"
+
