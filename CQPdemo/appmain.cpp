@@ -25,7 +25,7 @@ typedef struct {
 
 int flag;
 
-char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物\n","竜が我が敵を喰らえ!\n","c语言我只服c prime plus\n","土土没过四级\n","Just hack for fun\n","As we do, as you know \n" };
+char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物\n","竜が我が敵を喰らえ!\n","c语言我只服c primer plus\n","土土没过四级\n","Just hack for fun\n","As we do, as you know \n" };
 int lenWelcode = sizeof(welcome) / 4;
 CRITICAL_SECTION  _critical;
 
@@ -255,7 +255,7 @@ int lenIsa = sizeof(keyIsa) / 4;
 int lenWhere = sizeof(keyWhere) / 4;
 keyword where[2] = { {keyIsa,lenIsa},{keyWhere,lenWhere} };
 
-char *(keyWhat[]) = { "c语言","C语言","编程","黑客","信安","安全"};
+char *(keyWhat[]) = { "c语言","C语言","编程","黑客","信安","安全", "c", "C"};
 int lenWhat = sizeof(keyWhat) / 4;
 char *(keyHow[]) = { "什么","怎么","应该","如何","哪些","有没有" ,"有关", "想","教","咋","么?","么？","呢","吗","没？","没?" };
 int lenHow = sizeof(keyHow) / 4;
@@ -373,6 +373,16 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t sendTime, int64_t
 	if (fromGroup == 555091662) {
 		char *atMe = "[CQ:at,qq=858325880]";
 		char *at = strstr((char *)msg, atMe);
+
+		if (strstr(msg, "禁言我") || strstr(msg, "求禁言") || 
+			(strstr(msg, "求") && strstr(msg, "禁言") && (msg, "我"))) {
+
+			srand((unsigned)time(NULL));
+			// talk is cheap, show me your face~ :)
+			CQ_setGroupBan(ac, fromGroup, fromQQ, rand() % (6 * 3600));
+			CQ_sendGroupMsg(ac, fromGroup, "来呀！互相伤害啊！");
+		}
+
 		if (at != NULL) {
 			requestAt(fromGroup, fromQQ, msg);
 		}
@@ -391,13 +401,13 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t sendTime, int64_t
 	}
 
 	if (fromGroup == 555091662 || fromGroup == 536559442) {
-		if (!strcmp(msg, "每日消息推送")) {
+		if (!strcmp(msg, "每日消息推送") || !strcmp(msg, "每日新闻") || !strcmp(msg, "今日新闻")) {
 			News(fromGroup);
 		}
 	}
 
 	if (fromGroup == 555091662 || fromGroup == 536559442) {
-		if (!strcmp(msg, "近期消息推送")) {
+		if (!strcmp(msg, "近期消息推送") || !strcmp(msg, "最近消息推送") || !strcmp(msg, "最近新闻")) {
 			recentNews(fromGroup);
 		}
 	}
