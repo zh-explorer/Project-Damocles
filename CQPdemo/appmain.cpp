@@ -25,7 +25,7 @@ typedef struct {
 
 int flag;
 
-char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物\n","竜が我が敵を喰らえ!\n","c语言我只服c primer plus\n","土土没过四级\n","Just hack for fun\n","As we do, as you know \n" };
+char *welcome[] = { "我们的征途是星辰与大海！\n","溜金哇啦啊酷咧！\n","さあ、ステキなパーティしましょ！\n","大黑客挂了要重修\n","土土挂了大物（土土：挂个屁(╯‵□′)╯︵┻━┻）\n","竜が我が敵を喰らえ!\n","c语言我只服c primer plus\n","欢迎来到直布罗陀监测站\n","Just hack for fun\n","As we do, as you know \n" };
 int lenWelcode = sizeof(welcome) / 4;
 CRITICAL_SECTION  _critical;
 
@@ -269,6 +269,10 @@ char *(keyWeb[]) = { "数据","站","杭电","官网", "库" ,"QQ","qq","钻","会员","号"
 int lenWeb = sizeof(keyWeb) / 4;
 keyword hack[] = { { keyHack ,lenHack },{ keyWeb ,lenWeb }, { keyHow ,lenHow } };
 
+char *(keyReg[]) = {"招新","报名","加入"};
+int lenReg = sizeof(keyReg) / 4;
+keyword reg[] = { { keyReg ,lenReg }, { keyHow ,lenHow } };
+
 char *(keyPersion[]) = {"人"};
 int lenPersion = sizeof(keyPersion) / 4;
 keyword persion[] = { { keyHow,lenHow },{ keyPersion,lenPersion },{ keyIsa,lenIsa } };
@@ -302,6 +306,10 @@ void checkWord(int64_t fromGroup, int64_t fromQQ, const char *msg) {
 	}
 	if (checkExist(hack, msg, 3)) {
 		sprintf(bp, "[CQ:at,qq=%lld] 国家刑法第二百八十六条规定，\n关于恶意利用计算机犯罪相关条文对于违反国家规定，对计算机信息系统功能进行删除、修改、增加、干扰，造成计算机信息系统不能正常运行，后果严重的，处五年以下有期徒刑或者拘役；后果特别严重的，处五年以上有期徒刑。\n违反国家规定，对计算机信息系统中存储、处理或者传输的数据和应用程序进行删除、修改、增加的操作，后果严重的，依照前款的规定处罚。", fromQQ);
+		CQ_sendGroupMsg(ac, fromGroup, bp);
+	}
+	if (checkExist(reg, msg, 2)) {
+		sprintf(bp, "[CQ:at,qq=%lld] 线上的报名地址是http://reg.hduisa.org，纸质在面试的时候带过来。\n推荐线上报名o(*^▽^*)┛[CQ:face,id=21]", fromQQ);
 		CQ_sendGroupMsg(ac, fromGroup, bp);
 	}
 	if (checkExist(persion, msg, 3)) {
@@ -459,7 +467,7 @@ CQEVENT(int32_t, __eventSystem_GroupMemberIncrease, 32)(int32_t subType, int32_t
 	if (fromGroup == 555091662) {
 		srand(time(NULL));
 		int index = rand() % lenWelcode;
-		sprintf(bp, "[CQ:at,qq=%lld] 欢迎加入信息安全协会2016届新生群\n请先阅读以下事项：\n1、协会官网: http://hduisa.org \nwiki：http://t.cn/R5BI2h5 \ndrops：http://t.cn/R5BILcO \n2、协会简介请移步：http://t.cn/R5BIyba \n3、如有任何疑问，请在群里艾特管理员提问 \n PS:%s", beingOperateQQ, welcome[index]);
+		sprintf(bp, "[CQ:at,qq=%lld] 欢迎加入信息安全协会2016届新生群\n请先阅读以下事项：\n1、协会官网: http://hduisa.org \nwiki：http://t.cn/R5BI2h5 \ndrops：http://t.cn/R5BILcO \n2、协会简介请移步：http://t.cn/R5BIyba \n3、新生报名：http://reg.hduisa.org \n4、如有任何疑问，请在群里艾特管理员提问 \n PS:%s", beingOperateQQ, welcome[index]);
 		CQ_sendGroupMsg(ac, fromGroup, bp);
 	}
 	if (fromGroup == 198508284) {
